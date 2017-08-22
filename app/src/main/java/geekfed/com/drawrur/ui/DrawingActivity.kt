@@ -22,59 +22,33 @@
 
 package geekfed.com.drawrur.ui
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.view.MotionEvent
-import com.jakewharton.rxbinding2.view.RxView
 import geekfed.com.drawrur.R
-import geekfed.com.drawrur.data.DrawingPoint
-import io.reactivex.Observable
+import io.reactivex.disposables.CompositeDisposable
 import kotlinx.android.synthetic.main.activity_drawing.*
 
-class DrawingActivity : AppCompatActivity(), DrawingView {
+class DrawingActivity : AppCompatActivity() {
 
-    val paint = Paint()
-
-    val baseStrokeWidth = 15f
-
-    var cachedBitmap: Bitmap? = null
+    val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_drawing)
+    }
 
-        DrawingModel(DrawingIntent(this))
+    override fun onResume() {
+        super.onResume()
+        val disposable = DrawingModel(DrawingIntent(drawingCanvas))
                 .observable
                 .subscribe {
-                    render(it)
+                    drawingCanvas.render(it)
                 }
-
+        compositeDisposable.add(disposable)
     }
 
-    fun render(drawingState: DrawingState) {
-        if (cachedBitmap == null) {
-            cachedBitmap = Bitmap.createBitmap(drawingCanvas.width, drawingCanvas.height, Bitmap.Config.ARGB_8888)
-        }
-
-        var previousPoint: DrawingPoint? = null
-        for (currentPoint in drawingState.drawingPoints) {
-            previousPoint?.let {
-                val canvas = Canvas(cachedBitmap)
-                paint.strokeWidth = baseStrokeWidth //+ (500f * currentPoint.size)
-                paint.color = Color.BLACK
-                canvas.drawLine(it.x, it.y, currentPoint.x, currentPoint.y, paint)
-                drawingCanvas.background = BitmapDrawable(resources, cachedBitmap)
-            }
-            previousPoint = currentPoint
-        }
-    }
-
-    override fun getMotionEvents(): Observable<MotionEvent> {
-        return RxView.touches(drawingCanvas)
+    override fun onStop() {
+        compositeDisposable.clear()
+        super.onStop()
     }
 }
