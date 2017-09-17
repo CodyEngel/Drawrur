@@ -23,35 +23,69 @@
 package geekfed.com.drawrur.ui
 
 import geekfed.com.drawrur.data.DrawingPoint
+import geekfed.com.drawrur.helper.RandomColor
 import io.reactivex.Observable
-import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.subjects.ReplaySubject
+import io.reactivex.subjects.Subject
+import java.util.*
 
 /**
  * @author cody
  */
 class DrawingModel(drawingIntent: DrawingIntent) {
 
+    private val randomColor = RandomColor()
+
     private val collectedDrawingPoints: ArrayList<DrawingPoint> = ArrayList()
 
-    private val subject: BehaviorSubject<DrawingState> = BehaviorSubject.create()
+    private val defaultColor = "#607D8B"
 
-    val observable: Observable<DrawingState> = subject
+    private var previousState = DrawingState(emptyList(), defaultColor, false)
+
+    private val subject: Subject<DrawingState> = ReplaySubject.create()
 
     init {
-        drawingIntent.touches.subscribe {
+        Observable.merge(
+            transformTouchesToState(drawingIntent.getTouches()),
+            transformColorClicks(drawingIntent.getColorClicks()),
+            transformResetClicks(drawingIntent.getResetClicks())
+        ).subscribe {
+            if (previousState != it) {
+                previousState = it
+                subject.onNext(it)
+            }
+        }
+    }
+
+    fun getObservable(): Observable<DrawingState> = subject
+
+    private fun transformColorClicks(clicks: Observable<Boolean>): Observable<DrawingState> {
+        return clicks.map {
+            DrawingState(collectedDrawingPoints, randomColor.get(previousState.drawingColor), false)
+        }
+    }
+
+    private fun transformResetClicks(clicks: Observable<Boolean>): Observable<DrawingState> {
+        return clicks.map {
+            collectedDrawingPoints.clear()
+            DrawingState(collectedDrawingPoints, defaultColor, true)
+        }
+    }
+
+    private fun transformTouchesToState(touches: Observable<DrawingPoint>): Observable<DrawingState> {
+        return touches.map {
+            var emitState = previousState
             collectedDrawingPoints.add(it)
             if (collectedDrawingPoints.size >= 2) {
                 val currentDrawingPoint = collectedDrawingPoints.get(collectedDrawingPoints.size - 1)
                 val previousDrawingPoint = collectedDrawingPoints.get(collectedDrawingPoints.size - 2)
 
-                if (currentDrawingPoint.time - previousDrawingPoint.time < 50) {
-                    subject.onNext(
-                            DrawingState(
-                                    listOf(previousDrawingPoint, currentDrawingPoint)
-                            )
-                    )
-                }
+                emitState = previousState.copy(
+                        drawingPoints = listOf(previousDrawingPoint, currentDrawingPoint),
+                        redraw = false
+                )
             }
+            emitState
         }
     }
 

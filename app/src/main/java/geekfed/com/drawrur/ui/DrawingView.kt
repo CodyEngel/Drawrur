@@ -30,4 +30,6 @@ import io.reactivex.Observable
  */
 interface DrawingView {
     fun getMotionEvents(): Observable<MotionEvent>
+    fun getChangeColorClicks(): Observable<Any>
+    fun getResetClicks(): Observable<Any>
 }

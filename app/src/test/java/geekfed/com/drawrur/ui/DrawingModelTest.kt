@@ -22,11 +22,9 @@
 
 package geekfed.com.drawrur.ui
 
-import geekfed.com.drawrur.fakes.DrawingViewFake
-import geekfed.com.drawrur.mocks.MotionEventMock
+import geekfed.com.drawrur.data.DrawingPoint
+import geekfed.com.drawrur.fakes.DrawingIntentFake
 import org.junit.Test
-
-import org.junit.Assert.*
 
 /**
  * @author cody
@@ -34,22 +32,28 @@ import org.junit.Assert.*
 class DrawingModelTest {
 
     @Test
-    fun testGetObservable() {
-        val drawingViewFake = DrawingViewFake(arrayListOf(
-                MotionEventMock(1.2f, 2.2f, 3.2f, 42).mock,
-                MotionEventMock(506.45f, 321.184f, 0.81742f, 43).mock
-        ))
-        val drawingIntent = DrawingIntent(drawingViewFake)
-        val drawingModel = DrawingModel(drawingIntent)
+    fun testTouches() {
+        val drawingIntentFake = DrawingIntentFake(
+                touches = arrayListOf(
+                        DrawingPoint(1.2f, 2.2f, 3.2f, 42),
+                        DrawingPoint(506.45f, 321.184f, 0.81742f, 43),
+                        DrawingPoint(506.45f, 321.184f, 0.81742f, 45)
+                )
+        )
+        val drawingModel = DrawingModel(drawingIntentFake)
 
-        drawingModel.observable.test()
+        drawingModel.getObservable().test()
                 .assertValueAt(0, {
                     it.drawingPoints.size == 2 &&
                     it.drawingPoints.get(0).time == 42L &&
                     it.drawingPoints.get(1).time == 43L
                 })
-                .assertValueCount(1)
+                .assertValueAt(1, {
+                    it.drawingPoints.size == 2 &&
+                            it.drawingPoints.get(0).time == 43L &&
+                            it.drawingPoints.get(1).time == 45L
+                })
+                .assertValueCount(2)
                 .assertNoErrors()
     }
-
 }

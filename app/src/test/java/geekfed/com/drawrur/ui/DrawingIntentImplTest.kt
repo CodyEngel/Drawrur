@@ -29,22 +29,50 @@ import org.junit.Test
 /**
  * @author cody
  */
-class DrawingIntentTest {
+class DrawingIntentImplTest {
 
     @Test
     fun testTouches() {
-        val drawingViewFake = DrawingViewFake(arrayListOf(
+        val drawingViewFake = DrawingViewFake(
+            motionEvents = arrayListOf(
                 MotionEventMock(1.0f, 2.0f, 3.0f, 40).mock,
                 MotionEventMock(1.1f, 2.1f, 3.1f, 41).mock,
                 MotionEventMock(506.45f, 321.184f, 0.81742f, 56471842L).mock
-        ))
-        val drawingIntent = DrawingIntent(drawingViewFake)
+            )
+        )
+        val drawingIntent = DrawingIntentImpl(drawingViewFake)
 
-        drawingIntent.touches.test()
+        drawingIntent.getTouches().test()
                 .assertValueAt(0, { it.x == 1.0f && it.y == 2.0f && it.size == 3.0f && it.time == 40L })
                 .assertValueAt(1, { it.x == 1.1f && it.y == 2.1f && it.size == 3.1f && it.time == 41L })
                 .assertValueAt(2, { it.x == 506.45f && it.y == 321.184f && it.size == 0.81742f && it.time == 56471842L})
                 .assertValueCount(3)
+                .assertNoErrors()
+    }
+
+    @Test
+    fun testColorClicks() {
+        val drawingViewFake = DrawingViewFake(changeColorClicks = arrayListOf(Any(), Any()))
+        val drawingIntent = DrawingIntentImpl(drawingViewFake)
+
+        drawingIntent.getColorClicks().test()
+                .assertValueAt(0, { it })
+                .assertValueAt(1, { it })
+                .assertValueCount(2)
+                .assertNoErrors()
+    }
+
+    @Test
+    fun testResetClicks() {
+        val drawingViewFake = DrawingViewFake(resetClicks = arrayListOf(Any(), Any(), Any(), Any()))
+        val drawingIntent = DrawingIntentImpl(drawingViewFake)
+
+        drawingIntent.getResetClicks().test()
+                .assertValueAt(0, { it })
+                .assertValueAt(1, { it })
+                .assertValueAt(2, { it })
+                .assertValueAt(3, { it })
+                .assertValueCount(4)
                 .assertNoErrors()
     }
 }

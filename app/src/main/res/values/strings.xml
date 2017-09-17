@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Drawrur</string>
+    <string name="button_reset">Reset</string>
+    <string name="button_change_color">Change Color</string>
 </resources>

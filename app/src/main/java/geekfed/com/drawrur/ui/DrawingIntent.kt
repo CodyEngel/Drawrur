@@ -23,13 +23,15 @@
 package geekfed.com.drawrur.ui
 
 import geekfed.com.drawrur.data.DrawingPoint
+import io.reactivex.Observable
 
 /**
  * @author cody
  */
-class DrawingIntent(drawingView: DrawingView) {
+interface DrawingIntent {
+    fun getTouches(): Observable<DrawingPoint>
 
-    val touches = drawingView.getMotionEvents()
-            .map { DrawingPoint(it.x, it.y, it.size, it.eventTime) }
+    fun getColorClicks(): Observable<Boolean>
 
+    fun getResetClicks(): Observable<Boolean>
 }

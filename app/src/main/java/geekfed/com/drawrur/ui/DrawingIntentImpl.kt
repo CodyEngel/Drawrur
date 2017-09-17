@@ -20,27 +20,24 @@
  * SOFTWARE.
  */
 
-package geekfed.com.drawrur.fakes
+package geekfed.com.drawrur.ui
 
 import android.view.MotionEvent
-import geekfed.com.drawrur.ui.DrawingView
+import geekfed.com.drawrur.data.DrawingPoint
 import io.reactivex.Observable
 
 /**
  * @author cody
  */
-class DrawingViewFake(
-        private val motionEvents: List<MotionEvent> = emptyList(),
-        private val changeColorClicks: List<Any> = emptyList(),
-        private val resetClicks: List<Any> = emptyList()
+class DrawingIntentImpl(private val drawingView: DrawingView): DrawingIntent {
 
-): DrawingView {
-    override fun getMotionEvents(): Observable<MotionEvent> =
-            Observable.fromArray(motionEvents).flatMapIterable { it }
+    override fun getTouches(): Observable<DrawingPoint> {
+        return drawingView.getMotionEvents()
+                .filter { it.action != MotionEvent.ACTION_UP }
+                .map { DrawingPoint(it.x, it.y, it.size, it.eventTime) }
+    }
 
-    override fun getChangeColorClicks(): Observable<Any> =
-            Observable.fromArray(changeColorClicks).flatMapIterable { it }
+    override fun getColorClicks(): Observable<Boolean> = drawingView.getChangeColorClicks().map { true }
 
-    override fun getResetClicks(): Observable<Any> =
-            Observable.fromArray(resetClicks).flatMapIterable { it }
+    override fun getResetClicks(): Observable<Boolean> = drawingView.getResetClicks().map { true }
 }

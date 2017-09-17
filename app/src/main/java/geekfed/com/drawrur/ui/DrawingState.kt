@@ -28,5 +28,7 @@ import geekfed.com.drawrur.data.DrawingPoint
  * @author cody
  */
 data class DrawingState(
-        val drawingPoints: List<DrawingPoint>
+        val drawingPoints: List<DrawingPoint>,
+        val drawingColor: String,
+        val redraw: Boolean
 )

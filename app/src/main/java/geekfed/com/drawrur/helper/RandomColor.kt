@@ -20,27 +20,41 @@
  * SOFTWARE.
  */
 
-package geekfed.com.drawrur.fakes
-
-import android.view.MotionEvent
-import geekfed.com.drawrur.ui.DrawingView
-import io.reactivex.Observable
+package geekfed.com.drawrur.helper
 
 /**
  * @author cody
  */
-class DrawingViewFake(
-        private val motionEvents: List<MotionEvent> = emptyList(),
-        private val changeColorClicks: List<Any> = emptyList(),
-        private val resetClicks: List<Any> = emptyList()
+class RandomColor {
 
-): DrawingView {
-    override fun getMotionEvents(): Observable<MotionEvent> =
-            Observable.fromArray(motionEvents).flatMapIterable { it }
+    fun get(previousColor: String): String {
+        val newColor = when ((0..19).random()) {
+            0 -> "#F44336"
+            1 -> "#E91E63"
+            2 -> "#9C27B0"
+            3 -> "#673AB7"
+            4 -> "#3F51B5"
+            5 -> "#2196F3"
+            6 -> "#03A9F4"
+            7 -> "#00BCD4"
+            8 -> "#009688"
+            9 -> "#4CAF50"
+            10 -> "#8BC34A"
+            11 -> "#CDDC39"
+            12 -> "#FFEB3B"
+            13 -> "#FFC107"
+            14 -> "#FF9800"
+            15 -> "#FF5722"
+            16 -> "#795548"
+            17 -> "#9E9E9E"
+            18 -> "#607D8B"
+            else -> get(previousColor)
+        }
 
-    override fun getChangeColorClicks(): Observable<Any> =
-            Observable.fromArray(changeColorClicks).flatMapIterable { it }
-
-    override fun getResetClicks(): Observable<Any> =
-            Observable.fromArray(resetClicks).flatMapIterable { it }
+        if (newColor == previousColor) {
+            return get(previousColor)
+        } else {
+            return newColor
+        }
+    }
 }

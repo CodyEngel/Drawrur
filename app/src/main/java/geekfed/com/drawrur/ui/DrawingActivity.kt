@@ -39,10 +39,10 @@ class DrawingActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        val disposable = DrawingModel(DrawingIntent(drawingCanvas))
-                .observable
+        val disposable = DrawingModel(DrawingIntentImpl(drawingView))
+                .getObservable()
                 .subscribe {
-                    drawingCanvas.render(it)
+                    drawingView.render(it)
                 }
         compositeDisposable.add(disposable)
     }

@@ -20,27 +20,11 @@
  * SOFTWARE.
  */
 
-package geekfed.com.drawrur.fakes
+package geekfed.com.drawrur.helper
 
-import android.view.MotionEvent
-import geekfed.com.drawrur.ui.DrawingView
-import io.reactivex.Observable
+import java.util.*
 
 /**
  * @author cody
  */
-class DrawingViewFake(
-        private val motionEvents: List<MotionEvent> = emptyList(),
-        private val changeColorClicks: List<Any> = emptyList(),
-        private val resetClicks: List<Any> = emptyList()
-
-): DrawingView {
-    override fun getMotionEvents(): Observable<MotionEvent> =
-            Observable.fromArray(motionEvents).flatMapIterable { it }
-
-    override fun getChangeColorClicks(): Observable<Any> =
-            Observable.fromArray(changeColorClicks).flatMapIterable { it }
-
-    override fun getResetClicks(): Observable<Any> =
-            Observable.fromArray(resetClicks).flatMapIterable { it }
-}
+fun ClosedRange<Int>.random() = Random().nextInt(endInclusive - start) +  start

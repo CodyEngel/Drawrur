@@ -23,14 +23,15 @@
 package geekfed.com.drawrur.ui
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
+import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.MotionEvent
-import android.widget.FrameLayout
+import android.widget.Button
+import android.widget.LinearLayout
 import com.jakewharton.rxbinding2.view.RxView
+import geekfed.com.drawrur.R
 import geekfed.com.drawrur.data.DrawingPoint
 import io.reactivex.Observable
 
@@ -38,40 +39,84 @@ import io.reactivex.Observable
  * @author cody
  */
 class DrawingViewImpl(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) :
-        FrameLayout(context, attrs, defStyleAttr, defStyleRes), DrawingView {
+        LinearLayout(context, attrs, defStyleAttr, defStyleRes), DrawingView {
 
-    val paint = Paint()
+    private val paint = Paint()
 
-    val baseStrokeWidth = 15f
+    private var cachedBitmap: Bitmap? = null
 
-    var cachedBitmap: Bitmap? = null
+    private val changeColorButton: Button
+
+    private val resetButton: Button
+
+    private val strokeWidth = 10f
 
     constructor(context: Context?) : this(context, null, 0, 0)
     constructor(context: Context?, attrs: AttributeSet?) : this(context, attrs, 0, 0)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : this(context, attrs, defStyleAttr, 0)
 
     init {
-        paint.strokeWidth = baseStrokeWidth
+        changeColorButton = Button(context)
+        resetButton = Button(context)
+        placeChangeColorButton()
+        placeResetButton()
+
+        paint.isAntiAlias = true
+        paint.style = Paint.Style.STROKE
+        paint.strokeJoin = Paint.Join.ROUND
+        paint.strokeWidth = strokeWidth
     }
 
+    override fun getMotionEvents(): Observable<MotionEvent> = RxView.touches(this)
+
+    override fun getChangeColorClicks(): Observable<Any> = RxView.clicks(changeColorButton)
+
+    override fun getResetClicks(): Observable<Any> = RxView.clicks(resetButton)
+
     fun render(drawingState: DrawingState) {
-        if (cachedBitmap == null) {
+        if (!isAttachedToWindow) return
+
+        if (cachedBitmap == null || drawingState.redraw) {
             cachedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         }
 
+        paint.color = Color.parseColor(drawingState.drawingColor)
+
+        val drawingCanvas = Canvas(cachedBitmap)
+        drawingCanvas.drawPath(generateDrawingPath(drawingState.drawingPoints), paint)
+        background = BitmapDrawable(resources, cachedBitmap)
+    }
+
+    private fun generateDrawingPath(drawingPoints: List<DrawingPoint>): Path {
+        val drawingPath = Path()
         var previousPoint: DrawingPoint? = null
-        for (currentPoint in drawingState.drawingPoints) {
+        for (currentPoint in drawingPoints) {
             previousPoint?.let {
-                val canvas = Canvas(cachedBitmap)
-                canvas.drawLine(it.x, it.y, currentPoint.x, currentPoint.y, paint)
-                background = BitmapDrawable(resources, cachedBitmap)
-            }
+                if (currentPoint.time - it.time < 25) {
+                    drawingPath.quadTo(it.x, it.y, currentPoint.x, currentPoint.y)
+                } else {
+                    drawingPath.moveTo(currentPoint.x, currentPoint.y)
+                }
+            } ?: drawingPath.moveTo(currentPoint.x, currentPoint.y)
             previousPoint = currentPoint
         }
+        return drawingPath
     }
 
-    override fun getMotionEvents(): Observable<MotionEvent> {
-        return RxView.touches(this)
+    private fun placeResetButton() {
+        resetButton.text = context.getString(R.string.button_reset)
+        placeButton(resetButton, Gravity.END)
     }
 
+    private fun placeChangeColorButton() {
+        changeColorButton.text = context.getString(R.string.button_change_color)
+        placeButton(changeColorButton, Gravity.START)
+    }
+
+    private fun placeButton(button: Button, gravity: Int) {
+        val params = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT)
+        params.gravity = Gravity.BOTTOM + gravity
+        params.weight = 1f
+        addView(button, params)
+    }
 }
